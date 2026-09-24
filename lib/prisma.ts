@@ -23,7 +23,19 @@ const adapter = new PrismaMariaDb({
   user: decodeURIComponent(connectionUrl.username),
   password: decodeURIComponent(connectionUrl.password),
   database: connectionUrl.pathname.replace(/^\//, ""),
-  connectionLimit: 5,
+  connectionLimit: 2,
+  connectTimeout: 10_000,
+  acquireTimeout: 10_000,
+  ...(process.env.DATABASE_SSL === "true"
+    ? {
+        ssl: {
+          rejectUnauthorized: true,
+          ...(process.env.DATABASE_SSL_CA
+            ? { ca: process.env.DATABASE_SSL_CA.replace(/\\n/g, "\n") }
+            : {}),
+        },
+      }
+    : {}),
 });
 
 export const prisma =

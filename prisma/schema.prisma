@@ -13,18 +13,79 @@ datasource db {
 }
 
 model User {
-  id            String    @id
-  name          String    @db.Text
+  id            String       @id
+  name          String       @db.Text
   email         String
-  emailVerified Boolean   @default(false)
-  image         String?   @db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  emailVerified Boolean      @default(false)
+  image         String?      @db.Text
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   sessions      Session[]
   accounts      Account[]
+  uploads       Upload[]
+  usage         DailyUsage[]
 
   @@unique([email])
   @@map("user")
+}
+
+enum UploadStatus {
+  queued
+  processing
+  finished
+  failed
+}
+
+enum ImageKind {
+  original
+  result
+  thumbnail
+}
+
+model Upload {
+  id              String        @id @db.VarChar(36)
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename        String        @db.VarChar(255)
+  status          UploadStatus  @default(queued)
+  stage           String?       @db.VarChar(40)
+  title           String?       @db.VarChar(500)
+  author          String?       @db.VarChar(500)
+  error           String?       @db.VarChar(500)
+  metadataWarning String?       @db.VarChar(500)
+  attemptCount    Int           @default(0)
+  processingToken String?       @db.VarChar(36)
+  leaseExpiresAt  DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  finishedAt      DateTime?
+  images          UploadImage[]
+
+  @@index([userId, createdAt])
+  @@index([userId, status, leaseExpiresAt])
+}
+
+model UploadImage {
+  id       String    @id @default(cuid())
+  uploadId String    @db.VarChar(36)
+  upload   Upload    @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  kind     ImageKind
+  mimeType String    @db.VarChar(40)
+  width    Int
+  height   Int
+  byteSize Int
+  data     Bytes     @db.MediumBlob
+
+  @@unique([uploadId, kind])
+}
+
+model DailyUsage {
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day      String @db.VarChar(10)
+  attempts Int    @default(0)
+
+  @@id([userId, day])
 }
 
 model Session {

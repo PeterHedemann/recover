@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useActionState } from "react";
 import { SignUpAction, type SignUpFormData } from "@/lib/actions/signup";
 import type { FormState } from "@/lib/utils";
@@ -33,7 +35,7 @@ export function SignUpForm() {
 
       <label className="block text-sm font-medium">
         Name
-        <input
+        <Input
           name="name"
           type="text"
           required
@@ -51,7 +53,7 @@ export function SignUpForm() {
 
       <label className="block text-sm font-medium">
         Email
-        <input
+        <Input
           name="email"
           type="email"
           required
@@ -69,7 +71,7 @@ export function SignUpForm() {
 
       <label className="block text-sm font-medium">
         Password
-        <input
+        <Input
           name="password"
           type="password"
           required
@@ -88,7 +90,7 @@ export function SignUpForm() {
 
       <label className="block text-sm font-medium">
         Repeat password
-        <input
+        <Input
           name="repeatPassword"
           type="password"
           required
@@ -105,13 +107,13 @@ export function SignUpForm() {
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={pending}
         className="w-full rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-500"
       >
         {pending ? "Creating account..." : "Create account"}
-      </button>
+      </Button>
     </form>
   );
 }

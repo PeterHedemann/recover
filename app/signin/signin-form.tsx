@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useActionState } from "react";
 import { SignInAction, type SignInFormData } from "@/lib/actions/signin";
 import type { FormState } from "@/lib/utils";
@@ -33,7 +35,7 @@ export function SignInForm() {
 
       <label className="block text-sm font-medium">
         Email
-        <input
+        <Input
           name="email"
           type="email"
           required
@@ -51,7 +53,7 @@ export function SignInForm() {
 
       <label className="block text-sm font-medium">
         Password
-        <input
+        <Input
           name="password"
           type="password"
           required
@@ -68,13 +70,13 @@ export function SignInForm() {
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={pending}
         className="w-full rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-500"
       >
         {pending ? "Signing in..." : "Sign in"}
-      </button>
+      </Button>
     </form>
   );
 }
