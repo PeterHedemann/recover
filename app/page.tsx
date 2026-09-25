@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Expand, ScanText, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { getCurrentUser } from "@/lib/users";
 import { listUploads } from "@/lib/covers/store";
 import { Button } from "@/components/ui/button";
@@ -41,13 +41,10 @@ export default async function Home({
             1072 × 1448 px · Every time
           </span>
         </div>
-        <section className="grid gap-7 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="grid gap-7">
           <Card className="shadow-none">
             <CardContent className="p-6 sm:p-8">
               <div className="mb-6 flex items-center gap-3">
-                <span className="text-xs font-semibold text-muted-foreground">
-                  01 /
-                </span>
                 <h2 className="text-lg font-semibold">Start with a cover</h2>
               </div>
               {user ? (
@@ -83,76 +80,6 @@ export default async function Home({
               )}
             </CardContent>
           </Card>
-          <div className="flex flex-col justify-between rounded-xl bg-[#e9ede4] p-7 sm:p-9">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
-                Made for your library
-              </p>
-              <h2 className="mt-4 max-w-sm font-serif text-3xl leading-tight">
-                The same story.
-                <br />A little more canvas.
-              </h2>
-              <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                AI enhances the cover and extends its artwork to fit. Small
-                images may still lack fine detail, so upload a larger source if
-                the finished lettering or artwork is unclear.
-              </p>
-            </div>
-            <div
-              className="my-8 flex items-center justify-center gap-5"
-              aria-hidden="true"
-            >
-              <div className="flex h-32 w-22 items-center justify-center rounded-sm bg-[#365749] p-3 text-center font-serif text-lg text-[#f4e8bd] shadow-lg">
-                A world
-                <br />
-                within
-              </div>
-              <ArrowRight className="text-primary/50" size={22} />
-              <div className="flex h-40 w-30 items-center justify-center rounded-sm bg-[#b5c7a7] shadow-lg">
-                <div className="flex h-32 w-22 items-center justify-center bg-[#365749] p-3 text-center font-serif text-lg text-[#f4e8bd]">
-                  A world
-                  <br />
-                  within
-                </div>
-              </div>
-            </div>
-            <div className="space-y-4 border-t border-primary/15 pt-6">
-              {[
-                [
-                  Expand,
-                  "A precise fit",
-                  "Exactly 1072 × 1448 pixels, ready to download.",
-                ],
-                [
-                  ScanText,
-                  "Book details, discovered",
-                  "Title and author read from your original cover.",
-                ],
-                [
-                  BookOpen,
-                  "A collection to come back to",
-                  "Your originals and finished covers, in one place.",
-                ],
-              ].map(([Icon, title, description]) => {
-                const Glyph = Icon as typeof Expand;
-                return (
-                  <div key={String(title)} className="flex gap-3">
-                    <Glyph
-                      className="mt-0.5 shrink-0 text-primary"
-                      size={18}
-                      strokeWidth={1.5}
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{String(title)}</p>
-                      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                        {String(description)}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </section>
         {library && (
           <section className="mt-14" aria-labelledby="library-title">
