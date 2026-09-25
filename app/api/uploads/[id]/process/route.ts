@@ -41,6 +41,12 @@ export async function POST(
         where: { uploadId_kind: { uploadId: id, kind: "original" } },
       });
       if (!original) throw new AppError(404, "Original image not found.");
+      const output = await prisma.upload.findFirst({
+        where: { id, userId: user.id },
+        select: { outputWidth: true, outputHeight: true },
+      });
+      const outputWidth = output?.outputWidth ?? OUTPUT_WIDTH;
+      const outputHeight = output?.outputHeight ?? OUTPUT_HEIGHT;
       const bytes = Buffer.from(original.data);
       const [book, image] = await Promise.all([
         identifyBook(client, bytes, original.mimeType, controller.signal),
@@ -51,7 +57,7 @@ export async function POST(
           });
           if (!updated.count)
             throw new AppError(409, "This processing attempt has expired.");
-        }),
+        }, outputWidth, outputHeight),
       ]);
       const { data: thumbnail, info } = await sharp(image)
         .resize(240, 324)
@@ -74,8 +80,8 @@ export async function POST(
           throw new AppError(409, "This processing attempt has expired.");
         const result = {
           mimeType: "image/jpeg",
-          width: OUTPUT_WIDTH,
-          height: OUTPUT_HEIGHT,
+          width: outputWidth,
+          height: outputHeight,
           byteSize: image.length,
           data: new Uint8Array(image),
         };

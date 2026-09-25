@@ -33,7 +33,7 @@ export async function responseData(response: Response) {
   return data;
 }
 
-export function UploadForm({ full }: { full: boolean }) {
+export function UploadForm({ full, resolutions }: { full: boolean; resolutions: { id: string; name: string; width: number; height: number }[] }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const lock = useRef(false);
@@ -45,6 +45,7 @@ export function UploadForm({ full }: { full: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [stage, setStage] = useState("Uploading your cover…");
+  const [resolutionId, setResolutionId] = useState(resolutions[0]?.id || "");
 
   useEffect(() => {
     return () => {
@@ -110,6 +111,7 @@ export function UploadForm({ full }: { full: boolean }) {
       const form = new FormData();
       form.set("image", file);
       form.set("id", uploadId.current!);
+      form.set("resolutionId", resolutionId);
       const upload = await responseData(
         await fetch("/api/uploads", { method: "POST", body: form }),
       );
@@ -231,6 +233,12 @@ export function UploadForm({ full }: { full: boolean }) {
           higher-resolution image.
         </p>
       </div>
+      <label className="block space-y-2 text-sm font-medium">Output resolution
+        <select className="h-11 w-full rounded-md border bg-card px-3" value={resolutionId} onChange={(event) => setResolutionId(event.target.value)} disabled={busy}>
+          {resolutions.map((resolution) => <option key={resolution.id} value={resolution.id}>{resolution.name} ({resolution.width} × {resolution.height})</option>)}
+        </select>
+        <Link href="/settings/resolutions" className="text-xs font-normal underline underline-offset-4">Manage resolutions</Link>
+      </label>
       {full && (
         <p role="alert" className="text-sm text-destructive">
           Your library is full. Delete a cover to make room.

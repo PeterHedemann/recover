@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, ArrowUpRight, LogOut } from "lucide-react";
+import { BookOpen, ArrowUpRight, LogOut, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignOutAction } from "@/lib/actions/signout";
 
@@ -22,6 +22,9 @@ export function SiteHeader({ name }: { name?: string }) {
               <span className="hidden text-sm text-muted-foreground sm:block">
                 {name}
               </span>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/settings/resolutions"><Settings2 size={15} /> Resolutions</Link>
+              </Button>
               <form action={SignOutAction}>
                 <Button variant="ghost" size="sm">
                   <LogOut size={15} /> Sign out

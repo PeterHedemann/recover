@@ -3,6 +3,7 @@ import { apiUser, apiError, json, readBody } from "@/lib/covers/http";
 import { AppError } from "@/lib/covers/errors";
 import { MAX_REQUEST_BYTES } from "@/lib/covers/limits";
 import { validateImage } from "@/lib/covers/images";
+import { prisma } from "@/lib/prisma";
 import {
   listUploads,
   savedLimit,
@@ -44,15 +45,18 @@ export async function POST(request: Request) {
       throw new AppError(400, "Invalid upload.");
     }
     const id = z.uuid().safeParse(form.get("id"));
+    const resolutionId = z.string().min(1).safeParse(form.get("resolutionId"));
     const file = form.get("image");
     if (
-      !id.success ||
+      !id.success || !resolutionId.success ||
       !(file instanceof File) ||
       form.getAll("image").length !== 1
     )
       throw new AppError(400, "Choose one image to upload.");
     const data = Buffer.from(await file.arrayBuffer());
     const image = await validateImage(data);
+    const resolution = await prisma.outputResolution.findFirst({ where: { id: resolutionId.data, userId: user.id } });
+    if (!resolution) throw new AppError(400, "Choose one of your saved output resolutions.");
     const upload = await userTransaction(user.id, async (tx) => {
       const existing = await tx.upload.findUnique({
         where: { id: id.data },
@@ -77,6 +81,8 @@ export async function POST(request: Request) {
           id: id.data,
           userId: user.id,
           filename: file.name.slice(0, 255) || "cover",
+          outputWidth: resolution.width,
+          outputHeight: resolution.height,
           images: {
             create: [
               {

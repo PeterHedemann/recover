@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SiteHeader } from "@/components/site-header";
 import { UploadForm } from "@/components/upload-form";
 import { CoverStatus } from "@/components/cover-status";
+import { listResolutions } from "@/lib/covers/resolutions";
 
 export default async function Home({
   searchParams,
@@ -20,6 +21,7 @@ export default async function Home({
       ? requested
       : 1;
   const library = user ? await listUploads(user.id, page) : null;
+  const resolutions = user ? await listResolutions(user.id) : [];
   return (
     <>
       <SiteHeader name={user?.name} />
@@ -27,19 +29,15 @@ export default async function Home({
         <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              A little more room for your stories
+              A perfect fit for your stories
             </p>
             <h1 className="font-serif text-4xl tracking-tight sm:text-5xl">
               Good covers. Perfect fit.
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
-              Turn a book cover into a beautifully extended image, ready for
-              your next read.
+              Turn any book cover into the perfect fit for your ebook reader
             </p>
           </div>
-          <span className="rounded-full border bg-card px-4 py-2 text-xs font-medium text-primary">
-            1072 × 1448 px · Every time
-          </span>
         </div>
         <section className="grid gap-7">
           <Card className="shadow-none">
@@ -50,6 +48,7 @@ export default async function Home({
               {user ? (
                 <UploadForm
                   full={!!library && library.total >= library.limit}
+                  resolutions={resolutions}
                 />
               ) : (
                 <div className="flex min-h-80 flex-col items-center justify-center rounded-xl border border-dashed bg-background p-8 text-center">

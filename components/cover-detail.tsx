@@ -207,10 +207,15 @@ export function CoverDetail({ initial }: { initial: Cover }) {
                   {kind === "original" ? "Original cover" : "Your new cover"}
                 </h2>
                 <span className="text-xs text-muted-foreground">
-                  {kind === "original" ? "As uploaded" : "1072 × 1448"}
+                  {kind === "original"
+                    ? "As uploaded"
+                    : `${cover.outputWidth ?? 1072} × ${cover.outputHeight ?? 1448} px`}
                 </span>
               </div>
-              <CardContent className="flex aspect-[1072/1448] items-center justify-center bg-muted/50 p-5">
+              <CardContent
+                className="flex items-center justify-center bg-muted/50 p-5"
+                style={kind === "result" ? { aspectRatio: `${cover.outputWidth ?? 1072} / ${cover.outputHeight ?? 1448}` } : { aspectRatio: "1072 / 1448" }}
+              >
                 {kind === "original" || cover.status === "finished" ? (
                   <>
                     <a

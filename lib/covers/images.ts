@@ -13,6 +13,10 @@ const mimeTypes: Record<string, string> = {
   webp: "image/webp",
 };
 
+const IMAGE_DIMENSION_MULTIPLE = 16;
+const roundUpToModelDimension = (value: number) =>
+  Math.ceil(value / IMAGE_DIMENSION_MULTIPLE) * IMAGE_DIMENSION_MULTIPLE;
+
 export async function validateImage(data: Buffer) {
   if (!data.length || data.length > MAX_UPLOAD_BYTES)
     throw new AppError(413, "Choose an image smaller than 4 MB.");
@@ -57,40 +61,47 @@ export async function validateImage(data: Buffer) {
   }
 }
 
-export async function prepareCover(original: Buffer) {
+export async function prepareCover(original: Buffer, outputWidth = OUTPUT_WIDTH, outputHeight = OUTPUT_HEIGHT) {
+  const canvasWidth = roundUpToModelDimension(outputWidth);
+  const canvasHeight = roundUpToModelDimension(outputHeight);
+  const cropLeft = Math.floor((canvasWidth - outputWidth) / 2);
+  const cropTop = Math.floor((canvasHeight - outputHeight) / 2);
   const { data, info } = await sharp(original, {
     limitInputPixels: MAX_IMAGE_PIXELS,
   })
     .rotate()
     .flatten({ background: "#ffffff" })
-    .resize(OUTPUT_WIDTH, OUTPUT_HEIGHT, { fit: "inside" })
+    .resize(outputWidth, outputHeight, { fit: "inside" })
     .png()
     .toBuffer({ resolveWithObject: true });
-  const left = Math.floor((OUTPUT_WIDTH - info.width) / 2);
-  const top = Math.floor((OUTPUT_HEIGHT - info.height) / 2);
-  // API dimensions are multiples of 16; four extra rows at each edge are removed on export.
+  const left = cropLeft + Math.floor((outputWidth - info.width) / 2);
+  const top = cropTop + Math.floor((outputHeight - info.height) / 2);
   const canvas = await sharp({
     create: {
-      width: OUTPUT_WIDTH,
-      height: 1456,
+      width: canvasWidth,
+      height: canvasHeight,
       channels: 3,
       background: "#e8e5df",
     },
   })
-    .composite([{ input: data, left, top: top + 4 }])
+    .composite([{ input: data, left, top }])
     .png()
     .toBuffer();
-  return { canvas, left, top, width: info.width, height: info.height };
+  return { canvas, left, top, width: info.width, height: info.height, outputWidth, outputHeight, canvasWidth, canvasHeight, cropLeft, cropTop };
 }
 
-export async function finishCover(generated: Buffer) {
+export async function finishCover(generated: Buffer, outputWidth = OUTPUT_WIDTH, outputHeight = OUTPUT_HEIGHT) {
+  const canvasWidth = roundUpToModelDimension(outputWidth);
+  const canvasHeight = roundUpToModelDimension(outputHeight);
+  const cropLeft = Math.floor((canvasWidth - outputWidth) / 2);
+  const cropTop = Math.floor((canvasHeight - outputHeight) / 2);
   const background = await sharp(generated, {
     limitInputPixels: MAX_IMAGE_PIXELS,
   })
-    .resize(OUTPUT_WIDTH, 1456, { fit: "cover" })
+    .resize(canvasWidth, canvasHeight, { fit: "cover" })
     .toBuffer();
   const cropped = await sharp(background)
-    .extract({ left: 0, top: 4, width: OUTPUT_WIDTH, height: OUTPUT_HEIGHT })
+    .extract({ left: cropLeft, top: cropTop, width: outputWidth, height: outputHeight })
     .toBuffer();
   for (const quality of [92, 85, 75]) {
     const data = await sharp(cropped)

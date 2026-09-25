@@ -24,6 +24,7 @@ model User {
   accounts      Account[]
   uploads       Upload[]
   usage         DailyUsage[]
+  outputResolutions OutputResolution[]
 
   @@unique([email])
   @@map("user")
@@ -54,6 +55,8 @@ model Upload {
   error           String?       @db.VarChar(500)
   metadataWarning String?       @db.VarChar(500)
   attemptCount    Int           @default(0)
+  outputWidth     Int?
+  outputHeight    Int?
   processingToken String?       @db.VarChar(36)
   leaseExpiresAt  DateTime?
   createdAt       DateTime      @default(now())
@@ -63,6 +66,19 @@ model Upload {
 
   @@index([userId, createdAt])
   @@index([userId, status, leaseExpiresAt])
+}
+
+model OutputResolution {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(80)
+  width     Int
+  height    Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, width, height])
+  @@index([userId])
 }
 
 model UploadImage {

@@ -10,6 +10,8 @@ export type Cover = {
   createdAt: string;
   finishedAt: string | null;
   attemptCount: number;
+  outputWidth: number | null;
+  outputHeight: number | null;
 };
 export type Library = {
   items: Cover[];
@@ -21,7 +23,7 @@ export type Library = {
 export const stageLabels: Record<string, string> = {
   preparing: "Preparing your cover…",
   extending: "Enhancing the cover, extending artwork, and reading details…",
-  exporting: "Finishing your 1072 × 1448 cover…",
+  exporting: "Finishing your cover…",
 };
 export const statusLabels = {
   queued: "Ready to process",

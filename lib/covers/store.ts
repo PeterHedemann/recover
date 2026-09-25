@@ -16,6 +16,8 @@ export const uploadSelect = {
   createdAt: true,
   finishedAt: true,
   attemptCount: true,
+  outputWidth: true,
+  outputHeight: true,
 } satisfies Prisma.UploadSelect;
 
 export const savedLimit = () =>
