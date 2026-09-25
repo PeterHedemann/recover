@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, ArrowUpRight, LogOut, Settings2 } from "lucide-react";
+import { BookOpen, ArrowUpRight, LogOut, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignOutAction } from "@/lib/actions/signout";
 
@@ -14,16 +14,13 @@ export function SiteHeader({ name }: { name?: string }) {
           <span className="rounded-lg bg-primary p-2 text-primary-foreground">
             <BookOpen size={20} />
           </span>
-          recover<span className="text-primary">.</span>
+          recover
         </Link>
         <div className="flex items-center gap-4">
           {name ? (
             <>
-              <span className="hidden text-sm text-muted-foreground sm:block">
-                {name}
-              </span>
               <Button asChild variant="ghost" size="sm">
-                <Link href="/settings/resolutions"><Settings2 size={15} /> Resolutions</Link>
+                <Link href="/settings/account"><UserRound size={15} /> Account</Link>
               </Button>
               <form action={SignOutAction}>
                 <Button variant="ghost" size="sm">
