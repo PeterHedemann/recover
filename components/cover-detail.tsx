@@ -213,12 +213,20 @@ export function CoverDetail({ initial }: { initial: Cover }) {
               <CardContent className="flex aspect-[1072/1448] items-center justify-center bg-muted/50 p-5">
                 {kind === "original" || cover.status === "finished" ? (
                   <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`${endpoint}/image/${kind}`}
-                      alt={`${kind === "original" ? "Original" : "Processed"} cover of ${cover.title || cover.filename}`}
-                      className="max-h-full max-w-full rounded-sm object-contain shadow-lg"
-                    />
+                    <a
+                      href={`${endpoint}/image/${kind}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Open ${kind === "original" ? "original" : "transformed"} cover in a new tab`}
+                      className="cursor-zoom-in"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`${endpoint}/image/${kind}`}
+                        alt={`${kind === "original" ? "Original" : "Processed"} cover of ${cover.title || cover.filename}`}
+                        className="max-h-full max-w-full rounded-sm object-contain shadow-lg"
+                      />
+                    </a>
                   </>
                 ) : (
                   <div className="px-5 text-center">
