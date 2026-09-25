@@ -226,6 +226,10 @@ export function UploadForm({ full }: { full: boolean }) {
         <p className="mt-4 text-xs text-muted-foreground">
           JPEG, PNG, WebP · up to 4 MB · 20 megapixels
         </p>
+        <p className="mt-2 max-w-sm text-xs leading-relaxed text-muted-foreground">
+          AI enhances the cover. If the result lacks detail, try a larger,
+          higher-resolution image.
+        </p>
       </div>
       {full && (
         <p role="alert" className="text-sm text-destructive">

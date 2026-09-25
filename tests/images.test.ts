@@ -29,14 +29,13 @@ test("rejects malformed, oversized, unsupported and excessive-pixel inputs", asy
   await assert.rejects(validateImage(await fixture(5000, 4100)));
 });
 
-test("exports exact dimensions and preserves the source over generated artwork", async () => {
-  const cover = await prepareCover(await fixture());
+test("exports the generated cover artwork at exact dimensions", async () => {
   const generated = await sharp({
     create: { width: 1072, height: 1456, channels: 3, background: "#1648c9" },
   })
     .png()
     .toBuffer();
-  const result = await finishCover(generated, cover);
+  const result = await finishCover(generated);
   const metadata = await sharp(result).metadata();
   assert.equal(metadata.width, 1072);
   assert.equal(metadata.height, 1448);
@@ -47,8 +46,8 @@ test("exports exact dimensions and preserves the source over generated artwork",
     .raw()
     .toBuffer();
   assert.ok(
-    middle[0] > 150 && middle[2] < 80,
-    "source red pixels survive the blue AI background",
+    middle[2] > 150 && middle[0] < 80,
+    "generated cover artwork is retained in the center",
   );
   const edge = await sharp(result)
     .extract({ left: 2, top: 720, width: 1, height: 1 })
@@ -56,7 +55,7 @@ test("exports exact dimensions and preserves the source over generated artwork",
     .toBuffer();
   assert.ok(
     edge[2] > 150 && edge[0] < 80,
-    "generated extension remains at the edge",
+    "generated artwork remains at the edge",
   );
 });
 

@@ -80,20 +80,10 @@ export async function prepareCover(original: Buffer) {
     .composite([{ input: data, left, top: top + 4 }])
     .png()
     .toBuffer();
-  return {
-    original: data,
-    canvas,
-    left,
-    top,
-    width: info.width,
-    height: info.height,
-  };
+  return { canvas, left, top, width: info.width, height: info.height };
 }
 
-export async function finishCover(
-  generated: Buffer,
-  cover: Awaited<ReturnType<typeof prepareCover>>,
-) {
+export async function finishCover(generated: Buffer) {
   const background = await sharp(generated, {
     limitInputPixels: MAX_IMAGE_PIXELS,
   })
@@ -102,10 +92,8 @@ export async function finishCover(
   const cropped = await sharp(background)
     .extract({ left: 0, top: 4, width: OUTPUT_WIDTH, height: OUTPUT_HEIGHT })
     .toBuffer();
-  // Reapply source pixels: a model must never rewrite the book's lettering or central artwork.
   for (const quality of [92, 85, 75]) {
     const data = await sharp(cropped)
-      .composite([{ input: cover.original, left: cover.left, top: cover.top }])
       .jpeg({ quality, mozjpeg: true })
       .toBuffer();
     if (data.length <= MAX_UPLOAD_BYTES) return data;

@@ -1,6 +1,6 @@
 # Recover
 
-A private book-cover library built with Next.js, shadcn/ui, BetterAuth, Prisma 7, and MySQL. Upload a flat book-cover image, identify its title and author with OpenAI, and extend its background to produce a 1072 × 1448 JPEG. Originals, results, and thumbnails are stored as binary MySQL MEDIUMBLOB values.
+A private book-cover library built with Next.js, shadcn/ui, BetterAuth, Prisma 7, and MySQL. Upload a flat book-cover image, identify its title and author with OpenAI, and enhance the cover while extending its background to produce a 1072 × 1448 JPEG. Originals, results, and thumbnails are stored as binary MySQL MEDIUMBLOB values.
 
 ## Local setup
 
@@ -17,7 +17,7 @@ The Prisma CLI configuration is `prisma7.config.ts`; package scripts explicitly 
 
 - `POST /api/uploads` accepts multipart `id` (client-generated UUID) and `image`, validates the actual image, stores it, and returns the record. Repeating the same ID for the same account returns the same upload.
 - `POST /api/uploads/:id/process` runs synchronously. No external queue or storage service is used. A saved `queued` record means “ready to process”, not an automatically scheduled background job.
-- OpenAI Responses extracts nullable title/author from the original. Images edit extends a 1072 × 1456 canvas. Sharp crops the extra rows, then overlays the proportionally scaled original to preserve its text/artwork, exporting exactly 1072 × 1448.
+- OpenAI Responses extracts nullable title/author from the original. Images edit enhances and extends a 1072 × 1456 canvas for every upload; Sharp crops the extra rows and exports exactly 1072 × 1448. Low-resolution sources may still lack fine detail, so users should upload a larger image if the result is unclear.
 - Metadata failure does not fail a successful image. Users can edit metadata afterward.
 - A short Prisma transaction locks the user row when claiming work or enforcing quotas. No transaction is held during an OpenAI request. One active processing request is allowed per account across Vercel instances.
 - SDK retries are disabled to avoid repeating chargeable edits. Manual retries consume another daily attempt. A finished upload's process endpoint is idempotent.

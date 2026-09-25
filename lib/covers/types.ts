@@ -20,7 +20,7 @@ export type Library = {
 };
 export const stageLabels: Record<string, string> = {
   preparing: "Preparing your cover…",
-  extending: "Extending the artwork and reading book details…",
+  extending: "Enhancing the cover, extending artwork, and reading details…",
   exporting: "Finishing your 1072 × 1448 cover…",
 };
 export const statusLabels = {

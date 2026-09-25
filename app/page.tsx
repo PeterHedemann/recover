@@ -93,8 +93,9 @@ export default async function Home({
                 <br />A little more canvas.
               </h2>
               <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                We keep the original cover intact and use AI to extend the
-                artwork around it. No stretched lettering. No cropped titles.
+                AI enhances the cover and extends its artwork to fit. Small
+                images may still lack fine detail, so upload a larger source if
+                the finished lettering or artwork is unclear.
               </p>
             </div>
             <div
