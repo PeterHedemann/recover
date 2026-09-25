@@ -165,13 +165,6 @@ export function CoverDetail({ initial }: { initial: Cover }) {
             {cover.author || "Book details will appear here"}
           </p>
         </div>
-        {cover.status === "finished" && (
-          <Button asChild>
-            <a href={`${endpoint}/image/result?download=1`}>
-              <Download size={16} /> Download cover
-            </a>
-          </Button>
-        )}
       </div>
       {(error || cover.error) && (
         <p
@@ -208,7 +201,7 @@ export function CoverDetail({ initial }: { initial: Cover }) {
       <div className="grid gap-7 lg:grid-cols-[1fr_320px]">
         <div className="grid gap-5 sm:grid-cols-2">
           {(["original", "result"] as const).map((kind) => (
-            <Card key={kind} className="overflow-hidden shadow-none">
+            <Card key={kind} className="overflow-hidden pb-0 shadow-none">
               <div className="flex items-center justify-between border-b px-5 py-4">
                 <h2 className="text-sm font-medium">
                   {kind === "original" ? "Original cover" : "Your new cover"}
@@ -238,6 +231,21 @@ export function CoverDetail({ initial }: { initial: Cover }) {
                   </div>
                 )}
               </CardContent>
+              {(kind === "original" || cover.status === "finished") && (
+                <div className="mt-auto border-t p-4">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    <a href={`${endpoint}/image/${kind}?download=1`}>
+                      <Download size={16} />
+                      Download {kind === "original" ? "original" : "transformed"}
+                    </a>
+                  </Button>
+                </div>
+              )}
             </Card>
           ))}
         </div>
@@ -303,11 +311,6 @@ export function CoverDetail({ initial }: { initial: Cover }) {
               {cover.status === "failed" ? "Retry processing" : "Process cover"}
             </Button>
           )}
-          <Button asChild variant="ghost" className="w-full">
-            <a href={`${endpoint}/image/original?download=1`}>
-              <Download size={16} /> Download original
-            </a>
-          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
