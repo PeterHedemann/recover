@@ -11,6 +11,8 @@ A private book-cover library built with Next.js, shadcn/ui, BetterAuth, Prisma 7
 5. Set `OPENAI_API_KEY` to an API project key with access to the configured models.
 6. Run `npm run dev` and open http://localhost:3000.
 
+Passkeys can be registered from **Account → Passkeys** and used as an optional sign-in method. For local development, open the site at `http://localhost:3000` (WebAuthn uses `localhost` as its relying-party ID). In deployed environments, set `BETTER_AUTH_URL` to the app's public HTTPS origin.
+
 The Prisma CLI configuration is `prisma7.config.ts`; package scripts explicitly pass this path. All schema changes are defined in `prisma/schema.prisma` and deployed through Prisma migrations. Generate future migrations with `prisma migrate dev --config prisma7.config.ts --name <name>` on a development database. Do not edit production tables directly or use `db push` for deployment.
 
 ## Processing and privacy

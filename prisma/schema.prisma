@@ -13,17 +13,18 @@ datasource db {
 }
 
 model User {
-  id            String       @id
-  name          String       @db.Text
-  email         String
-  emailVerified Boolean      @default(false)
-  image         String?      @db.Text
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  uploads       Upload[]
-  usage         DailyUsage[]
+  id                String             @id
+  name              String             @db.Text
+  email             String
+  emailVerified     Boolean            @default(false)
+  image             String?            @db.Text
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  sessions          Session[]
+  accounts          Account[]
+  passkeys          Passkey[]
+  uploads           Upload[]
+  usage             DailyUsage[]
   outputResolutions OutputResolution[]
 
   @@unique([email])
@@ -150,4 +151,22 @@ model Verification {
 
   @@index([identifier(length: 191)])
   @@map("verification")
+}
+
+model Passkey {
+  id           String   @id
+  name         String?
+  publicKey    String   @db.Text
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String   @unique @db.VarChar(512)
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?  @db.Text
+  createdAt    DateTime @default(now())
+  aaguid       String?
+
+  @@index([userId(length: 191)])
+  @@map("passkey")
 }
