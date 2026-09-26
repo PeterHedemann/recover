@@ -80,6 +80,7 @@ export async function transformCover(
   onStage: (stage: string) => Promise<void>,
   outputWidth = 1072,
   outputHeight = 1448,
+  bookMetadata?: Promise<{ title: string | null; author: string | null }>,
 ) {
   const cover = await prepareCover(original, outputWidth, outputHeight);
   await onStage("extending");
@@ -101,7 +102,8 @@ export async function transformCover(
   if (base64.length > 40_000_000)
     throw new AppError(502, "The generated image was too large. Please retry.");
   await onStage("exporting");
-  return finishCover(Buffer.from(base64, "base64"), outputWidth, outputHeight);
+  const metadata = bookMetadata ? await bookMetadata : undefined;
+  return finishCover(Buffer.from(base64, "base64"), outputWidth, outputHeight, metadata);
 }
 
 export function processingError(error: unknown) {

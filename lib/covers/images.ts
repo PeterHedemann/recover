@@ -90,7 +90,75 @@ export async function prepareCover(original: Buffer, outputWidth = OUTPUT_WIDTH,
   return { canvas, left, top, width: info.width, height: info.height, outputWidth, outputHeight, canvasWidth, canvasHeight, cropLeft, cropTop };
 }
 
-export async function finishCover(generated: Buffer, outputWidth = OUTPUT_WIDTH, outputHeight = OUTPUT_HEIGHT) {
+type BookMetadata = { title: string | null; author: string | null };
+
+function exifAscii(value: string | null) {
+  return (value || "")
+    .replace(/[æÆ]/g, "ae")
+    .replace(/[œŒ]/g, "oe")
+    .replace(/[øØ]/g, "o")
+    .replace(/[łŁ]/g, "l")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[þÞ]/g, "th")
+    .replace(/ß/g, "ss")
+    .normalize("NFKD")
+    .replace(/[\p{Diacritic}]/gu, "")
+    .replace(/[’‘]/g, "'")
+    .replace(/[“”]/g, "\"")
+    .replace(/[–—]/g, "-")
+    .replace(/[^\x20-\x7E]/g, "?");
+}
+
+function bookExif({ title, author }: BookMetadata) {
+  return {
+    IFD0: {
+      ImageDescription: exifAscii(title),
+      Artist: exifAscii(author),
+    },
+  };
+}
+
+function escapeXml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function bookXmp({ title, author }: BookMetadata) {
+  const fields = [
+    title && `<dc:title><rdf:Alt><rdf:li xml:lang="x-default">${escapeXml(title)}</rdf:li></rdf:Alt></dc:title>`,
+    author && `<dc:creator><rdf:Seq><rdf:li>${escapeXml(author)}</rdf:li></rdf:Seq></dc:creator>`,
+  ].filter(Boolean).join("");
+  return `<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">${fields}</rdf:Description>
+</rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+}
+
+export async function updateBookMetadata(image: Buffer, metadata: BookMetadata) {
+  for (const quality of [92, 85, 75]) {
+    const data = await sharp(image)
+      .withExif(bookExif(metadata))
+      .withXmp(bookXmp(metadata))
+      .jpeg({ quality, mozjpeg: true })
+      .toBuffer();
+    if (data.length <= MAX_UPLOAD_BYTES) return data;
+  }
+  throw new AppError(502, "The image is too large to save with book metadata.");
+}
+
+export async function finishCover(
+  generated: Buffer,
+  outputWidth = OUTPUT_WIDTH,
+  outputHeight = OUTPUT_HEIGHT,
+  metadata: BookMetadata = { title: null, author: null },
+) {
   const canvasWidth = roundUpToModelDimension(outputWidth);
   const canvasHeight = roundUpToModelDimension(outputHeight);
   const cropLeft = Math.floor((canvasWidth - outputWidth) / 2);
@@ -105,6 +173,8 @@ export async function finishCover(generated: Buffer, outputWidth = OUTPUT_WIDTH,
     .toBuffer();
   for (const quality of [92, 85, 75]) {
     const data = await sharp(cropped)
+      .withExif(bookExif(metadata))
+      .withXmp(bookXmp(metadata))
       .jpeg({ quality, mozjpeg: true })
       .toBuffer();
     if (data.length <= MAX_UPLOAD_BYTES) return data;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { updateBookMetadata } from "@/lib/covers/images";
 import { apiUser, apiError, json, readBody } from "@/lib/covers/http";
 import { AppError } from "@/lib/covers/errors";
 import {
@@ -53,6 +54,19 @@ export async function PATCH(request: Request, { params }: Context) {
           409,
           "Wait until processing finishes before editing details.",
         );
+      const resultImage = await tx.uploadImage.findUnique({
+        where: { uploadId_kind: { uploadId: id, kind: "result" } },
+        select: { data: true },
+      });
+      if (!resultImage) throw new AppError(404, "Transformed image not found.");
+      const taggedImage = await updateBookMetadata(Buffer.from(resultImage.data), {
+        title: parsed.data.title || null,
+        author: parsed.data.author || null,
+      });
+      await tx.uploadImage.update({
+        where: { uploadId_kind: { uploadId: id, kind: "result" } },
+        data: { data: new Uint8Array(taggedImage), byteSize: taggedImage.length },
+      });
       return tx.upload.update({
         where: { id },
         data: {

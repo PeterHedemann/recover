@@ -48,8 +48,9 @@ export async function POST(
       const outputWidth = output?.outputWidth ?? OUTPUT_WIDTH;
       const outputHeight = output?.outputHeight ?? OUTPUT_HEIGHT;
       const bytes = Buffer.from(original.data);
+      const bookPromise = identifyBook(client, bytes, original.mimeType, controller.signal);
       const [book, image] = await Promise.all([
-        identifyBook(client, bytes, original.mimeType, controller.signal),
+        bookPromise,
         transformCover(client, bytes, controller.signal, async (stage) => {
           const updated = await prisma.upload.updateMany({
             where: ownership,
@@ -57,7 +58,7 @@ export async function POST(
           });
           if (!updated.count)
             throw new AppError(409, "This processing attempt has expired.");
-        }, outputWidth, outputHeight),
+        }, outputWidth, outputHeight, bookPromise),
       ]);
       const { data: thumbnail, info } = await sharp(image)
         .resize(240, 324)
