@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, ArrowUpRight, LogOut, UserRound } from "lucide-react";
+import { BookOpen, ArrowUpRight, LogOut, Settings, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignOutAction } from "@/lib/actions/signout";
 
@@ -19,6 +19,9 @@ export function SiteHeader({ name }: { name?: string }) {
         <div className="flex items-center gap-4">
           {name ? (
             <>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/settings"><Settings size={15} /> Settings</Link>
+              </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link href="/settings/account"><UserRound size={15} /> Account</Link>
               </Button>

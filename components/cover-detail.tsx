@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
+  CheckCircle2,
+  CircleAlert,
   Download,
   LoaderCircle,
   RotateCcw,
@@ -28,6 +30,7 @@ import {
 import { CoverStatus } from "@/components/cover-status";
 import { responseData } from "@/components/upload-form";
 import { type Cover, stageLabels } from "@/lib/covers/types";
+import { BOOX_ADDRESS_KEY } from "@/app/settings/boox-settings";
 
 export function CoverDetail({ initial }: { initial: Cover }) {
   const router = useRouter();
@@ -37,9 +40,16 @@ export function CoverDetail({ initial }: { initial: Cover }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [booxAddress, setBooxAddress] = useState("");
+  const [booxBusy, setBooxBusy] = useState(false);
+  const [booxResult, setBooxResult] = useState<{ success: boolean; message: string } | null>(null);
   const locked = useRef(false);
   const processing = cover.status === "processing";
   const endpoint = `/api/uploads/${cover.id}`;
+
+  useEffect(() => {
+    setBooxAddress(window.localStorage.getItem(BOOX_ADDRESS_KEY)?.trim() || "");
+  }, []);
 
   useEffect(() => {
     if (!processing) return;
@@ -128,6 +138,45 @@ export function CoverDetail({ initial }: { initial: Cover }) {
     }
   }
 
+  async function uploadToBoox() {
+    const address = booxAddress.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+    if (!address) return;
+    setBooxBusy(true);
+    setBooxResult(null);
+    try {
+      let readerIsAvailable = false;
+      try {
+        const ping = await fetch(`http://${address}/api/ping`, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(3000),
+        });
+        readerIsAvailable = ping.ok && (await ping.text()).trim() === "ok";
+      } catch {
+        // Network errors and browser abort messages are replaced with one clear message below.
+      }
+      if (!readerIsAvailable) {
+        throw new Error("Could not reach your BOOX reader. Check its IP address and make sure it is on the same network.");
+      }
+      const imageResponse = await fetch(`${endpoint}/image/result`, { cache: "no-store" });
+      if (!imageResponse.ok) throw new Error("Could not load the transformed image.");
+      const image = await imageResponse.blob();
+      const extension = image.type === "image/png" ? "png" : image.type === "image/webp" ? "webp" : "jpg";
+      const form = new FormData();
+      form.append("file", new File([image], `cover-${cover.id}.${extension}`, { type: image.type || "image/jpeg" }));
+      form.append("dir", "/storage/emulated/0/Screensaver");
+      const upload = await fetch(`http://${address}/api/storage/upload`, { method: "POST", body: form });
+      if (!upload.ok) throw new Error("The BOOX reader could not save the image.");
+      setBooxResult({ success: true, message: "Transformed cover uploaded to your BOOX reader." });
+    } catch (cause) {
+      setBooxResult({
+        success: false,
+        message: cause instanceof Error ? cause.message : "Could not upload the cover to BOOX.",
+      });
+    } finally {
+      setBooxBusy(false);
+    }
+  }
+
   async function remove() {
     if (locked.current) return;
     locked.current = true;
@@ -166,6 +215,20 @@ export function CoverDetail({ initial }: { initial: Cover }) {
           </p>
         </div>
       </div>
+      <AlertDialog open={booxResult !== null} onOpenChange={(open) => { if (!open) setBooxResult(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="!place-items-center !text-center">
+            <div className={`mb-2 flex size-14 items-center justify-center rounded-full ${booxResult?.success ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+              {booxResult?.success ? <CheckCircle2 size={28} /> : <CircleAlert size={28} />}
+            </div>
+            <AlertDialogTitle>{booxResult?.success ? "Upload complete" : "Upload failed"}</AlertDialogTitle>
+            <AlertDialogDescription>{booxResult?.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="!justify-center">
+            <AlertDialogAction onClick={() => setBooxResult(null)}>Done</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {(error || cover.error) && (
         <p
           role="alert"
@@ -318,6 +381,22 @@ export function CoverDetail({ initial }: { initial: Cover }) {
               </form>
             </CardContent>
           </Card>
+          {cover.status === "finished" && (
+            <Card className="shadow-none">
+              <CardContent className="p-5">
+                <h2 className="font-semibold">BOOX Screensaver</h2>
+                {!booxAddress && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Enter your BOOX reader’s IP address on the <Link href="/settings" className="underline underline-offset-4">Settings page</Link> to upload this image.
+                  </p>
+                )}
+                <Button className="mt-4 w-full" disabled={booxBusy || busy || !booxAddress} onClick={uploadToBoox}>
+                  {booxBusy ? <LoaderCircle className="animate-spin" size={16} /> : null}
+                  {booxBusy ? "Uploading…" : "Upload to BOOX"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
           {(cover.status === "queued" || cover.status === "failed") && (
             <Button className="w-full" disabled={busy} onClick={process}>
               <RotateCcw size={16} />

@@ -237,7 +237,7 @@ export function UploadForm({ full, resolutions }: { full: boolean; resolutions: 
         <select className="h-11 w-full rounded-md border bg-card px-3" value={resolutionId} onChange={(event) => setResolutionId(event.target.value)} disabled={busy}>
           {resolutions.map((resolution) => <option key={resolution.id} value={resolution.id}>{resolution.name} ({resolution.width} × {resolution.height})</option>)}
         </select>
-        <Link href="/settings/resolutions" className="text-xs font-normal underline underline-offset-4">Manage resolutions</Link>
+        <Link href="/settings" className="text-xs font-normal underline underline-offset-4">Settings</Link>
       </label>
       {full && (
         <p role="alert" className="text-sm text-destructive">
