@@ -161,8 +161,20 @@ export function CoverDetail({ initial }: { initial: Cover }) {
       if (!imageResponse.ok) throw new Error("Could not load the transformed image.");
       const image = await imageResponse.blob();
       const extension = image.type === "image/png" ? "png" : image.type === "image/webp" ? "webp" : "jpg";
+      const nameParts = [cover.title, cover.author]
+        .map((part) => part?.trim())
+        .filter((part): part is string => Boolean(part));
+      const baseName = nameParts
+        .join(" ")
+        .normalize("NFKD")
+        .replace(/[\p{Diacritic}]/gu, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 120)
+        .replace(/-$/, "") || `cover-${cover.id}`;
       const form = new FormData();
-      form.append("file", new File([image], `cover-${cover.id}.${extension}`, { type: image.type || "image/jpeg" }));
+      form.append("file", new File([image], `${baseName}.${extension}`, { type: image.type || "image/jpeg" }));
       form.append("dir", "/storage/emulated/0/Screensaver");
       const upload = await fetch(`http://${address}/api/storage/upload`, { method: "POST", body: form });
       if (!upload.ok) throw new Error("The BOOX reader could not save the image.");
