@@ -31,8 +31,15 @@ import { CoverStatus } from "@/components/cover-status";
 import { responseData } from "@/components/upload-form";
 import { type Cover, stageLabels } from "@/lib/covers/types";
 import { BOOX_ADDRESS_KEY } from "@/app/settings/boox-settings";
+import { bookFilenameBase } from "@/lib/covers/filename";
 
-export function CoverDetail({ initial }: { initial: Cover }) {
+export function CoverDetail({
+  initial,
+  downloadExtensions,
+}: {
+  initial: Cover;
+  downloadExtensions: { original: string; result: string };
+}) {
   const router = useRouter();
   const [cover, setCover] = useState(initial);
   const [title, setTitle] = useState(initial.title || "");
@@ -161,18 +168,7 @@ export function CoverDetail({ initial }: { initial: Cover }) {
       if (!imageResponse.ok) throw new Error("Could not load the transformed image.");
       const image = await imageResponse.blob();
       const extension = image.type === "image/png" ? "png" : image.type === "image/webp" ? "webp" : "jpg";
-      const nameParts = [cover.title, cover.author]
-        .map((part) => part?.trim())
-        .filter((part): part is string => Boolean(part));
-      const baseName = nameParts
-        .join(" ")
-        .normalize("NFKD")
-        .replace(/[\p{Diacritic}]/gu, "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")
-        .slice(0, 120)
-        .replace(/-$/, "") || `cover-${cover.id}`;
+      const baseName = bookFilenameBase(cover.title, cover.author, `cover-${cover.id}`);
       const form = new FormData();
       form.append("file", new File([image], `${baseName}.${extension}`, { type: image.type || "image/jpeg" }));
       form.append("dir", "/storage/emulated/0/Screensaver");
@@ -294,7 +290,7 @@ export function CoverDetail({ initial }: { initial: Cover }) {
                 {kind === "original" || cover.status === "finished" ? (
                   <>
                     <a
-                      href={`${endpoint}/image/${kind}`}
+                      href={`${endpoint}/image/${kind}/${bookFilenameBase(cover.title, cover.author, `cover-${cover.id}`)}.${downloadExtensions[kind]}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`Open ${kind === "original" ? "original" : "transformed"} cover in a new tab`}
@@ -327,7 +323,10 @@ export function CoverDetail({ initial }: { initial: Cover }) {
                     size="sm"
                     className="w-full"
                   >
-                    <a href={`${endpoint}/image/${kind}?download=1`}>
+                    <a
+                      href={`${endpoint}/image/${kind}/${bookFilenameBase(cover.title, cover.author, `cover-${cover.id}`)}.${downloadExtensions[kind]}?download=1`}
+                      download={`${bookFilenameBase(cover.title, cover.author, `cover-${cover.id}`)}.${downloadExtensions[kind]}`}
+                    >
                       <Download size={16} />
                       Download {kind === "original" ? "original" : "transformed"}
                     </a>
