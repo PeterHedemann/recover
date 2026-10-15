@@ -110,12 +110,10 @@ function exifAscii(value: string | null) {
 }
 
 function bookExif({ title, author }: BookMetadata) {
-  return {
-    IFD0: {
-      ImageDescription: exifAscii(title),
-      Artist: exifAscii(author),
-    },
-  };
+  const fields: Record<string, string> = {};
+  if (title) fields.ImageDescription = exifAscii(title);
+  if (author) fields.Artist = exifAscii(author);
+  return Object.keys(fields).length ? { IFD0: fields } : null;
 }
 
 function escapeXml(value: string) {
@@ -142,9 +140,11 @@ function bookXmp({ title, author }: BookMetadata) {
 }
 
 export async function updateBookMetadata(image: Buffer, metadata: BookMetadata) {
+  const exif = bookExif(metadata);
   for (const quality of [92, 85, 75]) {
-    const data = await sharp(image)
-      .withExif(bookExif(metadata))
+    const pipeline = sharp(image);
+    if (exif) pipeline.withExif(exif);
+    const data = await pipeline
       .withXmp(bookXmp(metadata))
       .jpeg({ quality, mozjpeg: true })
       .toBuffer();
@@ -171,9 +171,11 @@ export async function finishCover(
   const cropped = await sharp(background)
     .extract({ left: cropLeft, top: cropTop, width: outputWidth, height: outputHeight })
     .toBuffer();
+  const exif = bookExif(metadata);
   for (const quality of [92, 85, 75]) {
-    const data = await sharp(cropped)
-      .withExif(bookExif(metadata))
+    const pipeline = sharp(cropped);
+    if (exif) pipeline.withExif(exif);
+    const data = await pipeline
       .withXmp(bookXmp(metadata))
       .jpeg({ quality, mozjpeg: true })
       .toBuffer();

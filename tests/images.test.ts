@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
-import { validateImage, prepareCover, finishCover } from "../lib/covers/images";
+import { validateImage, prepareCover, finishCover, updateBookMetadata } from "../lib/covers/images";
 
 async function fixture(width = 600, height = 900) {
   return sharp({
@@ -57,6 +57,32 @@ test("exports the generated cover artwork at exact dimensions", async () => {
     edge[2] > 150 && edge[0] < 80,
     "generated artwork remains at the edge",
   );
+});
+
+test("writes available book metadata and omits missing EXIF fields", async () => {
+  const input = await fixture(160, 240);
+  for (const metadata of [
+    { title: null, author: null },
+    { title: "", author: "" },
+    { title: "Book title", author: null },
+    { title: null, author: "Book author" },
+    { title: "Book title", author: "Book author" },
+  ]) {
+    for (const output of [
+      await finishCover(input, 160, 240, metadata),
+      await updateBookMetadata(input, metadata),
+    ]) {
+      const result = await sharp(output).metadata();
+      assert.equal(result.format, "jpeg");
+      if (!metadata.title && !metadata.author) {
+        assert.equal(result.exif, undefined);
+      } else {
+        assert.ok(result.exif);
+        if (metadata.title) assert.ok(result.exif.includes(Buffer.from(metadata.title)));
+        if (metadata.author) assert.ok(result.exif.includes(Buffer.from(metadata.author)));
+      }
+    }
+  }
 });
 
 test("normalizes EXIF orientation and preserves landscape cover proportions", async () => {
