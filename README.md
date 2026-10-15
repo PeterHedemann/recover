@@ -15,6 +15,18 @@ Passkeys can be registered from **Account → Passkeys** and used as an optional
 
 The Prisma CLI configuration is `prisma7.config.ts`; package scripts explicitly pass this path. All schema changes are defined in `prisma/schema.prisma` and deployed through Prisma migrations. Generate future migrations with `prisma migrate dev --config prisma7.config.ts --name <name>` on a development database. Do not edit production tables directly or use `db push` for deployment.
 
+## Native mobile sessions
+
+Better Auth's [bearer plugin](https://better-auth.com/docs/plugins/bearer) supports native clients alongside browser cookie sessions. Use the deployed HTTPS origin configured in `BETTER_AUTH_URL`. Configure the native HTTP client to avoid sending cookies, including on auth requests: Better Auth requires a trusted `Origin` for requests containing a `Cookie` header, even an empty one.
+
+1. Send `POST /api/auth/sign-in/email` with `Content-Type: application/json` and a JSON body containing `email` and `password`. New accounts can use `POST /api/auth/sign-up/email` with `name`, `email`, and `password`.
+2. On successful authentication, read the `set-auth-token` response header and store its value in the iOS Keychain. Treat the entire value as opaque, including any signature or URL encoding.
+3. Send `Authorization: Bearer <stored-token>` on subsequent requests, including uploads, images, resolutions, and `GET /api/auth/get-session`. Native requests can omit both cookies and `Origin`. If an `Origin` is supplied on a mutating application API request, it must still match the site.
+4. Inspect `set-auth-token` on auth responses and replace the stored value when present. Sessions retain Better Auth's existing expiration and renewal behavior; this is a session token, not a separate refresh token. If `get-session` returns `null` or an application API returns `401`, remove the token and sign in again.
+5. To sign out, send `POST /api/auth/sign-out` with the bearer header, `Content-Type: application/json`, and an empty JSON object (`{}`) to revoke the session, then remove the token from Keychain. Do not log or put tokens in URLs.
+
+Browser sessions continue to use cookies. Cookie-authenticated application mutations require the site's `Origin` header. Application API requests with a bearer token authenticate independently of cookies, so an invalid token cannot fall back to a browser session. No database migration is needed.
+
 ## Processing and privacy
 
 - `POST /api/uploads` accepts multipart `id` (client-generated UUID) and `image`, validates the actual image, stores it, and returns the record. Repeating the same ID for the same account returns the same upload.
@@ -24,7 +36,7 @@ The Prisma CLI configuration is `prisma7.config.ts`; package scripts explicitly 
 - A short Prisma transaction locks the user row when claiming work or enforcing quotas. No transaction is held during an OpenAI request. One active processing request is allowed per account across Vercel instances.
 - SDK retries are disabled to avoid repeating chargeable edits. Manual retries consume another daily attempt. A finished upload's process endpoint is idempotent.
 - A 310-second database lease recovers interrupted requests on subsequent history/status access. Tokens prevent an expired attempt from overwriting a newer one. This is request processing, not a durable job runner; closing the page or a host interruption can require a manual retry.
-- Image, metadata, mutation, and history endpoints check session ownership. Mutating API calls require the site's Origin header. Images have private, no-store responses and bypass the public image optimizer.
+- Image, metadata, mutation, and history endpoints check session ownership. Cookie-authenticated mutations require the site's Origin header; native clients can authenticate with a bearer token as described above. Images have private, no-store responses and bypass the public image optimizer.
 - Images are sent to OpenAI for processing. Text response storage is disabled. Application errors do not log image bytes or provider payloads.
 
 ## Limits

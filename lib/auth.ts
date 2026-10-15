@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { bearer } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { prisma } from "./prisma";
 
@@ -22,7 +23,8 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [
-    nextCookies(),
+    bearer(),
     passkey({ rpID: isLoopback ? "localhost" : authURL.hostname }),
+    nextCookies(),
   ],
 });

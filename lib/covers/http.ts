@@ -3,7 +3,12 @@ import { auth } from "@/lib/auth";
 import { AppError } from "./errors";
 
 export async function apiUser(request: Request, mutation = false) {
-  if (mutation) {
+  const hasBearer = /^Bearer \S+$/i.test(
+    request.headers.get("authorization") ?? "",
+  );
+  // Native clients have no Origin. Cookie-authenticated writes still require it;
+  // reject an explicitly untrusted Origin even when a bearer token is supplied.
+  if (mutation && (!hasBearer || request.headers.has("origin"))) {
     const origin = request.headers.get("origin");
     const allowed = new Set([new URL(request.url).origin]);
     if (process.env.BETTER_AUTH_URL)
@@ -11,7 +16,10 @@ export async function apiUser(request: Request, mutation = false) {
     if (!origin || !allowed.has(origin))
       throw new AppError(403, "Invalid request origin.");
   }
-  const session = await auth.api.getSession({ headers: request.headers });
+  const headers = new Headers(request.headers);
+  // A rejected bearer token must never fall back to an ambient browser session.
+  if (hasBearer) headers.delete("cookie");
+  const session = await auth.api.getSession({ headers });
   if (!session) throw new AppError(401, "Please sign in to continue.");
   return session.user;
 }
