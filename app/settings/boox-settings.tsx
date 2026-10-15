@@ -1,25 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export const BOOX_ADDRESS_KEY = "boox-reader-address";
+import { saveBooxAddress, useBooxAddress } from "@/lib/use-boox-address";
 
 export function BooxSettings() {
-  const [address, setAddress] = useState("");
+  const storedAddress = useBooxAddress();
+  const [draftAddress, setAddress] = useState<string | null>(null);
+  const address = draftAddress ?? storedAddress;
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setAddress(window.localStorage.getItem(BOOX_ADDRESS_KEY) || "");
-  }, []);
 
   function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const normalized = address.trim().replace(/^https?:\/\//i, "").replace(/\/$/, "");
     setAddress(normalized);
-    if (normalized) window.localStorage.setItem(BOOX_ADDRESS_KEY, normalized);
-    else window.localStorage.removeItem(BOOX_ADDRESS_KEY);
+    saveBooxAddress(normalized);
     setSaved(true);
   }
 

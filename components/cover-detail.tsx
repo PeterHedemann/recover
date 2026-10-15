@@ -30,7 +30,7 @@ import {
 import { CoverStatus } from "@/components/cover-status";
 import { responseData } from "@/components/upload-form";
 import { type Cover, stageLabels } from "@/lib/covers/types";
-import { BOOX_ADDRESS_KEY } from "@/app/settings/boox-settings";
+import { useBooxAddress } from "@/lib/use-boox-address";
 import { bookFilenameBase } from "@/lib/covers/filename";
 
 export function CoverDetail({
@@ -47,16 +47,12 @@ export function CoverDetail({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [booxAddress, setBooxAddress] = useState("");
+  const booxAddress = useBooxAddress().trim();
   const [booxBusy, setBooxBusy] = useState(false);
   const [booxResult, setBooxResult] = useState<{ success: boolean; message: string } | null>(null);
   const locked = useRef(false);
   const processing = cover.status === "processing";
   const endpoint = `/api/uploads/${cover.id}`;
-
-  useEffect(() => {
-    setBooxAddress(window.localStorage.getItem(BOOX_ADDRESS_KEY)?.trim() || "");
-  }, []);
 
   useEffect(() => {
     if (!processing) return;
